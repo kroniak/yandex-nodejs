@@ -5,6 +5,8 @@ var MyForm = {
             errorFields: []
         };
 
+        if (!obj) obj = this.getData();
+
         ['fio', 'email', 'phone'].forEach(value => {
             if (!obj.hasOwnProperty(value)) {
                 result.isValid = false;
@@ -56,14 +58,19 @@ var MyForm = {
 
     submit() {
         this.setData({
-            fio: 'Molchanov',
+            fio: 'Molchanov Nikolay V.',
             email: 'sds@sdsd',
             phone: '89214445559'
         });
 
-        if (this.validate(this.getData()).isValid) {
+        const validationResult = this.validate();
+        if (validationResult.isValid) {
             console.log('OK');
             document.forms["myForm"].submit();
         }
     }
-};
+}
+
+if (typeof module !== 'undefined' && module.exports != null) {
+    module.exports = MyForm;
+}
