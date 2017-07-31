@@ -36,8 +36,8 @@ var MyForm = {
                 .replace(/\(/g, '')
                 .replace(/\)/g, '');
             let sum = 0;
-            for (var i = 0; i < sPhone.length; i++) {
-                sum += Number(sPhone[i]);
+            for (const digit of sPhone) {
+                sum += Number(digit);
             }
             if (sum > 30) pushValidationFail('phone');
         }
@@ -52,10 +52,9 @@ var MyForm = {
 
         const result = {};
 
-        for (var i = 0; i < inputs.length; i++) {
-            const field = inputs[i];
-            if (field.id !== 'submitButton')
-                result[field.name] = field.value;
+        for (const input of inputs) {
+            if (input.id !== 'submitButton')
+                result[input.name] = input.value;
         }
 
         return result;
@@ -74,42 +73,75 @@ var MyForm = {
     },
 
     submit() {
+        function turnOffNotNeedClass(div, classes) {
+            if (Array.isArray(classes)) {
+                for (const item of classes) {
+                    const rule = '/(?:^|\s)' + item + '(?!\S)/';
+                    if (div.className.match(new RegExp(rule, 'g')))
+                        div.classList.toggle(item);
+                }
+
+            }
+        }
+
         function fetchData(url, resultDiv) {
             fetch(url)
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log(data);
-
+                    // console.log(data);
                     if (data.status === 'success') {
-                        resultDiv.className = 'success';
+                        resultDiv.classList.toggle('success');
+                        turnOffNotNeedClass(resultDiv, ['error', 'progress'])
+
                         resultDiv.textContent = 'Success';
                     } else if (data.status === 'error') {
-                        resultDiv.className = 'error';
+                        resultDiv.classList.toggle('error');
+                        turnOffNotNeedClass(resultDiv, ['success', 'progress'])
                         if (data.reason)
                             resultDiv.textContent = data.reason;
                     } else if (data.status === 'progress') {
-                        resultDiv.className = 'progress';
+                        turnOffNotNeedClass(resultDiv, ['success', 'error'])
+                        resultDiv.className += ' progress';
+
                         if (data.timeout)
                             setTimeout(fetchData, data.timeout, url, resultDiv);
                     }
                 });
         }
 
-        this.setData({
-            fio: 'Molchanov Nikolay V.',
-            email: 'sds@ya.ru',
-            phone: '+7(111)222-33-11'
-        });
+        const inputs = document
+            .getElementById('myForm')
+            .getElementsByTagName('input');
+
+        // this.setData({
+            //     fio: 'Molchanov Nikolay V.',
+            //     email: 'sds@ya.ru',
+            //     phone: '+7(111)222-33-11'
+            // });
 
         const validationResult = this.validate();
 
         if (validationResult.isValid) {
+            for (const input of inputs) {
+                if (input.id !== 'submitButton')
+                    if (input.className.match(/(?:^|\s)error(?!\S)/))
+                        input.classList.toggle('error');
+            }
+
             document.getElementById('submitButton').disabled = true;
 
             const url = document.getElementById('myForm').action;
             const resultDiv = document.getElementById('resultContainer');
 
             fetchData(url, resultDiv);
+        } else {
+            const {errorFields} = validationResult;
+
+            for (const name of errorFields) {
+                document
+                    .getElementById('myForm')
+                    .getElementsByTagName('input')[name].classList.toggle('error');
+            }
         }
     }
 }
