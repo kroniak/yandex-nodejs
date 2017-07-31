@@ -5,24 +5,40 @@ var MyForm = {
             errorFields: []
         };
 
+        function pushValidationFail(fieldName) {
+            result.isValid = false;
+            const { errorFields } = result;
+            if (!errorFields.includes(fieldName))
+                errorFields.push(fieldName);
+        }
+
         if (!obj) obj = this.getData();
 
         ['fio', 'email', 'phone'].forEach(value => {
-            if (!obj.hasOwnProperty(value)) {
-                result.isValid = false;
-                result.errorFields.push(value);
-            }
+            if (!obj.hasOwnProperty(value)) pushValidationFail(value);
         });
 
-        for (let name in obj) {
-            if (obj.hasOwnProperty(name))
-                if (name === 'fio') {
-                    const fio = obj[name].replace(/\s\s+/g, ' ').trim().split(' ');
-                    if (fio.length !== 3) {
-                        result.isValid = false;
-                        result.errorFields.push(name);
-                    }
-                }
+        const { fio = '', email = '', phone = '' } = obj;
+
+        const fioTrimmed = fio.replace(/\s\s+/g, ' ').trim().split(' ');
+        if (fioTrimmed.length !== 3) pushValidationFail('fio');
+
+        const regEmail = /^\w+([\.-]?\w+)*@ya.ru|yandex.ru|yandex.ua|yandex.by|yandex.kz|yandex.com$/;
+        if (!regEmail.test(email)) pushValidationFail('email');
+
+        const regPhone = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/;
+        if (!regPhone.test(phone)) pushValidationFail('phone')
+        else {
+            const sPhone = phone
+                .replace(/\+/g, '')
+                .replace(/\-/g, '')
+                .replace(/\(/g, '')
+                .replace(/\)/g, '');
+            let sum = 0;
+            for (var i = 0; i < sPhone.length; i++) {
+                sum += Number(sPhone[i]);
+            }
+            if (sum > 30) pushValidationFail('phone');
         }
 
         return result;
@@ -59,8 +75,8 @@ var MyForm = {
     submit() {
         this.setData({
             fio: 'Molchanov Nikolay V.',
-            email: 'sds@sdsd',
-            phone: '89214445559'
+            email: 'sds@ya.ru',
+            phone: '+7(111)222-33-11'
         });
 
         const validationResult = this.validate();
