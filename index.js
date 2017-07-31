@@ -7,18 +7,19 @@ var MyForm = {
 
         function pushValidationFail(fieldName) {
             result.isValid = false;
-            const { errorFields } = result;
+            const {errorFields} = result;
             if (!errorFields.includes(fieldName))
                 errorFields.push(fieldName);
         }
 
-        if (!obj) obj = this.getData();
+        if (!obj)
+            obj = this.getData();
 
         ['fio', 'email', 'phone'].forEach(value => {
             if (!obj.hasOwnProperty(value)) pushValidationFail(value);
         });
 
-        const { fio = '', email = '', phone = '' } = obj;
+        const {fio = '', email = '', phone = ''} = obj;
 
         const fioTrimmed = fio.replace(/\s\s+/g, ' ').trim().split(' ');
         if (fioTrimmed.length !== 3) pushValidationFail('fio');
@@ -73,6 +74,27 @@ var MyForm = {
     },
 
     submit() {
+        function fetchData(url, resultDiv) {
+            fetch(url)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
+
+                    if (data.status === 'success') {
+                        resultDiv.className = 'success';
+                        resultDiv.textContent = 'Success';
+                    } else if (data.status === 'error') {
+                        resultDiv.className = 'error';
+                        if (data.reason)
+                            resultDiv.textContent = data.reason;
+                    } else if (data.status === 'progress') {
+                        resultDiv.className = 'progress';
+                        if (data.timeout)
+                            setTimeout(fetchData, data.timeout, url, resultDiv);
+                    }
+                });
+        }
+
         this.setData({
             fio: 'Molchanov Nikolay V.',
             email: 'sds@ya.ru',
@@ -80,9 +102,14 @@ var MyForm = {
         });
 
         const validationResult = this.validate();
+
         if (validationResult.isValid) {
-            console.log('OK');
-            document.forms["myForm"].submit();
+            document.getElementById('submitButton').disabled = true;
+
+            const url = document.getElementById('myForm').action;
+            const resultDiv = document.getElementById('resultContainer');
+
+            fetchData(url, resultDiv);
         }
     }
 }
