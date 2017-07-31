@@ -100,8 +100,9 @@ var MyForm = {
                         if (data.reason)
                             resultDiv.textContent = data.reason;
                     } else if (data.status === 'progress') {
-                        turnOffNotNeedClass(resultDiv, ['success', 'error'])
-                        resultDiv.className += ' progress';
+                        turnOffNotNeedClass(resultDiv, ['success', 'error']);
+                        if (!resultDiv.className.match(/(?:^|\s)progress(?!\S)/))
+                            resultDiv.className += ' progress';
 
                         if (data.timeout)
                             setTimeout(fetchData, data.timeout, url, resultDiv);
