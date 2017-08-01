@@ -1,4 +1,10 @@
 var MyForm = {
+    /**
+     * Return object with validation result
+     * 
+     * @param {Object} [obj] Object with input types values. Optional. 
+     * @returns
+     */
     validate(obj) {
         const result = {
             isValid: true,
@@ -45,6 +51,11 @@ var MyForm = {
         return result;
     },
 
+    /**
+     * Get object with inputs values
+     * 
+     * @returns 
+     */
     getData() {
         const inputs = document
             .getElementById('myForm')
@@ -60,6 +71,11 @@ var MyForm = {
         return result;
     },
 
+    /**
+     * Set input values from obj arg.
+     * 
+     * @param {Object} obj 
+     */
     setData(obj) {
         const inputs = document
             .getElementById('myForm')
@@ -72,77 +88,77 @@ var MyForm = {
         }
     },
 
+    /**
+     * Submit form event handler 
+     * 
+     */
     submit() {
-        function turnOffNotNeedClass(div, classes) {
-            if (Array.isArray(classes)) {
-                for (const item of classes) {
-                    const rule = '/(?:^|\s)' + item + '(?!\S)/';
-                    if (div.className.match(new RegExp(rule, 'g')))
-                        div.classList.toggle(item);
-                }
-
-            }
-        }
-
-        function fetchData(url, resultDiv) {
+        /**
+         * Fetch data from form action URL
+         * 
+         * @param {string} url 
+         * @param {HTMLElement} div 
+         */
+        function fetchData(url, div) {
             fetch(url)
                 .then((response) => response.json())
                 .then((data) => {
-                    // console.log(data);
+                    console.log(data);
                     if (data.status === 'success') {
-                        resultDiv.classList.toggle('success');
-                        turnOffNotNeedClass(resultDiv, ['error', 'progress'])
+                        div.classList.toggle('success');
+                        div.classList.remove('error');
+                        div.classList.remove('progress');
 
-                        resultDiv.textContent = 'Success';
+                        div.textContent = 'Success';
                     } else if (data.status === 'error') {
-                        resultDiv.classList.toggle('error');
-                        turnOffNotNeedClass(resultDiv, ['success', 'progress'])
+                        div.classList.toggle('error');
+                        div.classList.remove('success');
+                        div.classList.remove('progress');
+
                         if (data.reason)
-                            resultDiv.textContent = data.reason;
+                            div.textContent = data.reason;
                     } else if (data.status === 'progress') {
-                        turnOffNotNeedClass(resultDiv, ['success', 'error']);
-                        if (!resultDiv.className.match(/(?:^|\s)progress(?!\S)/))
-                            resultDiv.className += ' progress';
+                        div.classList.remove('success');
+                        div.classList.remove('error');
+                        if (!div.classList.contains('progress'))
+                            div.classList.add('progress');
 
                         if (data.timeout)
-                            setTimeout(fetchData, data.timeout, url, resultDiv);
+                            setTimeout(fetchData, data.timeout, url, div);
                     }
                 });
         }
 
-        const inputs = document
-            .getElementById('myForm')
-            .getElementsByTagName('input');
+        /**
+         * Set validation statuses to field
+         * 
+         * @param {string[]} errorFields 
+         */
+        function setValidationStatuses({errorFields}) {
+            const inputs = document
+                .getElementById('myForm')
+                .getElementsByTagName('input');
 
-        // this.setData({
-            //     fio: 'Molchanov Nikolay V.',
-            //     email: 'sds@ya.ru',
-            //     phone: '+7(111)222-33-11'
-            // });
-
-        const validationResult = this.validate();
-
-        if (validationResult.isValid) {
             for (const input of inputs) {
                 if (input.id !== 'submitButton')
-                    if (input.className.match(/(?:^|\s)error(?!\S)/))
-                        input.classList.toggle('error');
+                    if (errorFields.includes(input.name) && !input.classList.contains('error')) {
+                        input.classList.add('error')
+                    } else if (!errorFields.includes(input.name) && input.classList.contains('error')) {
+                        input.classList.remove('error')
+                }
             }
+        }
 
+        const validationResult = this.validate();
+        setValidationStatuses(validationResult);
+
+        if (validationResult.isValid) {
             document.getElementById('submitButton').disabled = true;
 
             const url = document.getElementById('myForm').action;
             const resultDiv = document.getElementById('resultContainer');
 
             fetchData(url, resultDiv);
-        } else {
-            const {errorFields} = validationResult;
-
-            for (const name of errorFields) {
-                document
-                    .getElementById('myForm')
-                    .getElementsByTagName('input')[name].classList.toggle('error');
-            }
         }
     }
 }
